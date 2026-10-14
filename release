@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Exit immediately on errors, undefined variables, or failed pipeline commands.
+set -euo pipefail
+
+# Arguments:
+#   $1: Release type — major, minor, or patch
+#   $2: Release message (optional; defaults to "Release vX.Y.Z")
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+  echo "Usage: $0 <major|minor|patch> [\"<release message>\"]" >&2
+  exit 1
+fi
+
+RELEASE_TYPE="$1"
+MESSAGE="${2:-}"
+
+# Validate the release type.
+case "$RELEASE_TYPE" in
+  major|minor|patch)
+    ;;
+  *)
+    echo "Error: release type must be major, minor, or patch." >&2
+    exit 1
+    ;;
+esac
+
+# Switch to the main branch and update it without creating a merge commit.
+git switch main
+if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+  git pull --ff-only
+fi
+
+# Release only what passes the tests.
+npm test
+
+# Update the package version without letting npm create a commit or tag;
+# the "version" script keeps the playground's version marker in step.
+npm version "$RELEASE_TYPE" --no-git-tag-version
+
+# Read the updated version from package.json and prefix it with "v".
+VERSION="v$(node -p "require('./package.json').version")"
+if [[ -z "${MESSAGE//[[:space:]]/}" ]]; then
+  MESSAGE="Release $VERSION"
+fi
+
+# Commit the version changes and create an annotated Git tag.
+git add -A
+git commit -m "$MESSAGE"
+git tag -a "$VERSION" -m "$MESSAGE"
+
+# Push the main branch and the new release tag.
+git push -u origin main
+git push origin "$VERSION"
+
+echo "Released $VERSION: $MESSAGE"

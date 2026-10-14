@@ -1,0 +1,315 @@
+---
+version: 1
+
+# Canonical, law-agnostic BDD vocabulary. Source of truth — codegen reads this.
+# text: "{x}" = quoted string capture; {x} = bare numeric capture.
+# Quoted-only steps emit Cucumber-expression bindings ({string}); any numeric
+# arg forces a regex binding. See bdd/codegen/.
+
+# What a captured value means once it reaches the engine.
+#
+# The quoted form does not mean "text". `is "42"` and `is 42` name the same
+# value; the content decides what it is, and the quotes are only there because
+# the language has no bare form for a boolean or a date — the editor writes
+# every boolean as `is "true"`. Reading quotes as text would hand the engine a
+# String where the law compares a Bool, and EQUALS is structural, so that
+# comparison silently goes false instead of failing.
+#
+# A data-table cell carries no quoting either, and reads the same way. The cost
+# is that a numeric-looking identifier loses its string form (a leading zero
+# does not survive); which literals this language actually knows is #1172.
+#
+# Codegen carries these three keys into both dispatchers (Rust
+# packages/engine/tests/bdd, JS frontend/src/gherkin), so a change here changes
+# both engines and neither can hold its own opinion. See issue #1160.
+value_typing:
+  quoted: inferred
+  bare: number
+  table_cell: inferred
+
+steps:
+  # ---------- core: setup ----------
+  - id: set_calculation_date
+    action: set_calculation_date
+    keyword: given
+    tier: core
+    text: the calculation date is "{date}"
+    args: [{name: date, type: string}]
+
+  - id: load_law
+    action: load_law
+    keyword: given
+    tier: core
+    text: law "{law}" is loaded
+    args: [{name: law, type: string}]
+
+  - id: set_parameter_string
+    action: set_parameter
+    keyword: given
+    tier: core
+    text: parameter "{name}" is "{value}"
+    args: [{name: name, type: string}, {name: value, type: string}]
+
+  - id: set_parameter_number
+    action: set_parameter
+    keyword: given
+    tier: core
+    text: parameter "{name}" is {value}
+    args: [{name: name, type: string}, {name: value, type: number}]
+
+  - id: set_parameters_table
+    action: set_parameters_table
+    keyword: given
+    tier: core
+    text: 'the following parameters:'
+    datatable: true
+
+  - id: set_data_source
+    action: set_data_source
+    keyword: given
+    tier: core
+    text: 'the following "{source}" data with key "{key}":'
+    args: [{name: source, type: string}, {name: key, type: string}]
+    datatable: true
+
+  # External data that answers for one law only. The engine consults a scoped
+  # source solely while resolving that law's `source: {}` inputs (see
+  # `DataSource::law_scope`), so a raw register column can never shadow a
+  # same-named cross-law input of another law. The rows carry the law's inputs
+  # by name; the demo materialises persona data this way, one source per law.
+  - id: set_data_source_for_law
+    action: set_data_source_for_law
+    keyword: given
+    tier: core
+    text: 'the following "{source}" data with key "{key}" for law "{law}":'
+    args: [{name: source, type: string}, {name: key, type: string}, {name: law, type: string}]
+    datatable: true
+
+  # A collection-valued parameter, for the operations that iterate one
+  # (RFC-016). The table has a header row and one row per element, so each
+  # element becomes an object keyed by the column names — the same shape as a
+  # data-source table, bound to a parameter instead of a source. The plain
+  # parameter steps take a single cell and cannot express this.
+  - id: set_parameter_collection
+    action: set_parameter_collection
+    keyword: given
+    tier: core
+    text: 'parameter "{name}" is the collection:'
+    args: [{name: name, type: string}]
+    datatable: true
+
+  # ---------- core: execute ----------
+  - id: evaluate
+    action: evaluate
+    keyword: when
+    tier: core
+    text: I evaluate "{output}" of "{law}"
+    args: [{name: output, type: string}, {name: law, type: string}]
+
+  # ---------- core: asserts ----------
+  - id: assert_succeeds
+    action: assert_succeeds
+    keyword: then
+    tier: core
+    text: the execution succeeds
+
+  - id: assert_fails
+    action: assert_fails
+    keyword: then
+    tier: core
+    text: the execution fails
+
+  - id: assert_fails_with
+    action: assert_fails_with
+    keyword: then
+    tier: core
+    text: the execution fails with "{message}"
+    args: [{name: message, type: string}]
+
+  - id: assert_boolean_true
+    action: assert_boolean
+    keyword: then
+    tier: core
+    text: output "{output}" is true
+    args: [{name: output, type: string}]
+    literals: [true]
+
+  - id: assert_boolean_false
+    action: assert_boolean
+    keyword: then
+    tier: core
+    text: output "{output}" is false
+    args: [{name: output, type: string}]
+    literals: [false]
+
+  - id: assert_equals_number
+    action: assert_equals
+    keyword: then
+    tier: core
+    text: output "{output}" equals {value}
+    args: [{name: output, type: string}, {name: value, type: number}]
+
+  - id: assert_equals_string
+    action: assert_equals
+    keyword: then
+    tier: core
+    text: output "{output}" equals "{value}"
+    args: [{name: output, type: string}, {name: value, type: string}]
+
+  - id: assert_null
+    action: assert_null
+    keyword: then
+    tier: core
+    text: output "{output}" is absent
+    args: [{name: output, type: string}]
+
+  - id: assert_unknown
+    action: assert_unknown
+    keyword: then
+    tier: core
+    text: output "{output}" is unknown
+    args: [{name: output, type: string}]
+
+  - id: assert_unknown_for
+    action: assert_unknown_for
+    keyword: then
+    tier: core
+    text: output "{output}" is unknown for lack of "{name}"
+    args: [{name: output, type: string}, {name: name, type: string}]
+
+  - id: assert_contains
+    action: assert_contains
+    keyword: then
+    tier: core
+    text: output "{output}" contains "{value}"
+    args: [{name: output, type: string}, {name: value, type: string}]
+
+  # ---------- tier: provenance / multi-output ----------
+  - id: evaluate_outputs
+    action: evaluate_outputs
+    keyword: when
+    tier: provenance
+    text: I evaluate outputs "{outputs}" of "{law}"
+    args: [{name: outputs, type: string}, {name: law, type: string}]
+
+  - id: assert_exact_outputs
+    action: assert_exact_outputs
+    keyword: then
+    tier: provenance
+    text: the result contains exactly the outputs "{outputs}"
+    args: [{name: outputs, type: string}]
+
+  - id: assert_provenance_direct
+    action: assert_provenance
+    keyword: then
+    tier: provenance
+    text: output "{output}" has direct provenance
+    args: [{name: output, type: string}]
+    literals: [direct]
+
+  - id: assert_provenance_reactive
+    action: assert_provenance
+    keyword: then
+    tier: provenance
+    text: output "{output}" has reactive provenance
+    args: [{name: output, type: string}]
+    literals: [reactive]
+
+  - id: assert_provenance_override
+    action: assert_provenance
+    keyword: then
+    tier: provenance
+    text: output "{output}" has override provenance
+    args: [{name: output, type: string}]
+    literals: [override]
+
+  # ---------- tier: untranslatable ----------
+  - id: set_untranslatable_mode
+    action: set_untranslatable_mode
+    keyword: given
+    tier: untranslatable
+    text: the untranslatable mode is "{mode}"
+    args: [{name: mode, type: string}]
+
+  - id: assert_tainted
+    action: assert_tainted
+    keyword: then
+    tier: untranslatable
+    text: output "{output}" is tainted as untranslatable
+    args: [{name: output, type: string}]
+
+  # ---------- tier: notes (RFC-005 / RFC-018) ----------
+  - id: set_note_articles
+    action: set_note_articles
+    keyword: given
+    tier: notes
+    text: 'a law with the following articles:'
+    datatable: true
+
+  - id: set_note_selector_exact
+    action: set_note_selector_exact
+    keyword: given
+    tier: notes
+    text: a note selecting "{quote}"
+    args: [{name: quote, type: string}]
+
+  - id: set_note_selector_context
+    action: set_note_selector_context
+    keyword: given
+    tier: notes
+    text: a note selecting "{quote}" with prefix "{prefix}" and suffix "{suffix}"
+    args:
+      - {name: quote, type: string}
+      - {name: prefix, type: string}
+      - {name: suffix, type: string}
+
+  - id: set_note_hint_article
+    action: set_note_hint_article
+    keyword: given
+    tier: notes
+    text: the note hints article "{article}"
+    args: [{name: article, type: string}]
+
+  - id: set_note_hint_position
+    action: set_note_hint_position
+    keyword: given
+    tier: notes
+    text: the note hints article "{article}" at position {start} to {end}
+    args: [{name: article, type: string}, {name: start, type: number}, {name: end, type: number}]
+
+  - id: resolve_note
+    action: resolve_note
+    keyword: when
+    tier: notes
+    text: the note is resolved
+
+  - id: assert_note_resolves
+    action: assert_note_resolves
+    keyword: then
+    tier: notes
+    text: the note resolves to article "{article}"
+    args: [{name: article, type: string}]
+
+  - id: assert_note_exact_match
+    action: assert_note_exact_match
+    keyword: then
+    tier: notes
+    text: the note is an exact match
+
+  - id: assert_note_fuzzy_match
+    action: assert_note_fuzzy_match
+    keyword: then
+    tier: notes
+    text: the note is a fuzzy match
+
+  - id: assert_note_orphaned
+    action: assert_note_orphaned
+    keyword: then
+    tier: notes
+    text: the note is orphaned
+
+  - id: assert_note_ambiguous
+    action: assert_note_ambiguous
+    keyword: then
+    tier: notes
+    text: the note is ambiguous

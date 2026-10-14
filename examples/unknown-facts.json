@@ -1,0 +1,41 @@
+{
+  "description": "Absent versus unknown (RFC-036): no register has the rent, so the outcome is unknown and names the missing fact instead of guessing.",
+  "law": "test_null_semantics",
+  "outputs": [
+    "huur_hoog",
+    "hoog_en_onwaar"
+  ],
+  "date": "2025-01-01",
+  "parameters": {
+    "bsn": "999993653"
+  },
+  "data": [
+    {
+      "name": "register",
+      "key": "bsn",
+      "law": "test_null_semantics",
+      "records": [
+        {
+          "bsn": "999993653",
+          "partner_bsn": "999993641",
+          "beschikking": null
+        }
+      ]
+    },
+    {
+      "name": "register",
+      "key": "bsn",
+      "law": "test_null_semantics_bron",
+      "records": [
+        {
+          "bsn": "999993653",
+          "geboortejaar": 1975
+        },
+        {
+          "bsn": "999993641",
+          "geboortejaar": 1980
+        }
+      ]
+    }
+  ]
+}

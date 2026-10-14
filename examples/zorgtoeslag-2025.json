@@ -1,0 +1,110 @@
+{
+  "description": "Zorgtoeslag 2025 for a single adult: a cross-law chain through the Awir, the AWR and the Wet IB 2001, the standaardpremie filled in by the ministerial regulation, and the Awb hooks a beschikking triggers.",
+  "law": "wet_op_de_zorgtoeslag",
+  "outputs": [
+    "hoogte_zorgtoeslag"
+  ],
+  "date": "2025-01-01",
+  "parameters": {
+    "bsn": "999993653"
+  },
+  "data": [
+    {
+      "name": "personal_data",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "geboortedatum": "2005-01-01",
+          "verblijfsadres": "Amsterdam",
+          "land_verblijf": "NEDERLAND"
+        }
+      ]
+    },
+    {
+      "name": "relationship_data",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "partnerschap_type": "GEEN",
+          "partner_bsn": null
+        }
+      ]
+    },
+    {
+      "name": "insurance",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "polis_status": "ACTIEF",
+          "verdragsinschrijving": false
+        }
+      ]
+    },
+    {
+      "name": "box1",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "loon_uit_dienstbetrekking": 79547,
+          "uitkeringen_en_pensioenen": 0,
+          "winst_uit_onderneming": 0,
+          "resultaat_overige_werkzaamheden": 0,
+          "eigen_woning": 0
+        }
+      ]
+    },
+    {
+      "name": "inkomensgegevens",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "aanslag_of_navorderingsaanslag_vastgesteld": true,
+          "belastbaar_loon": 79547,
+          "niet_in_nederland_belastbaar_inkomen": 0
+        }
+      ]
+    },
+    {
+      "name": "box2",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "reguliere_voordelen": 0,
+          "vervreemdingsvoordelen": 0
+        }
+      ]
+    },
+    {
+      "name": "box3",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "spaargeld": 0,
+          "beleggingen": 0,
+          "onroerend_goed": 0,
+          "schulden": 0
+        }
+      ]
+    },
+    {
+      "name": "detenties",
+      "key": "bsn",
+      "records": [
+        {
+          "bsn": "999993653",
+          "detentiestatus": null,
+          "inrichting_type": null,
+          "zorgtype": null,
+          "juridische_grondslag": null
+        }
+      ]
+    }
+  ]
+}

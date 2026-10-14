@@ -1,0 +1,10 @@
+{
+  "description": "A beschikking under the Vreemdelingenwet 2000: the Awb hooks fire on their own, and article 69 overrides Awb 6:7 (lex specialis), four weeks instead of six.",
+  "law": "vreemdelingenwet_2000",
+  "outputs": [
+    "minister_is_bevoegd"
+  ],
+  "date": "2026-01-01",
+  "parameters": {},
+  "data": []
+}

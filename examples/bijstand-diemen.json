@@ -1,0 +1,18 @@
+{
+  "description": "Bijstand under the Participatiewet for a resident of Diemen with behaviour category 2: the municipal ordinance fills in the reduction of 30 percent.",
+  "law": "participatiewet",
+  "outputs": [
+    "uitkering_bedrag"
+  ],
+  "date": "2024-06-01",
+  "parameters": {
+    "bsn": "123456789",
+    "gemeente_code": "GM0384",
+    "leeftijd": 35,
+    "is_alleenstaande": true,
+    "heeft_kostendelende_medebewoners": false,
+    "heeft_pensioengerechtigde_leeftijd_bereikt": false,
+    "gedragscategorie": 2
+  },
+  "data": []
+}

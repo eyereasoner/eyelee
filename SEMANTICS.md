@@ -1,0 +1,190 @@
+# eyelee semantics
+
+This is the reading of the regelrecht law format that eyelee implements. It
+was written from the format's public contract: the JSON schema, the
+documentation, the canonical scenario grammar, the conformance scenarios and
+the golden cases. The reference engine's source was consulted only where
+the contract leaves a choice open. Those choices are marked **Choice** below,
+so they can be compared and argued about. Making them explicit is what a second
+implementation is for.
+
+## Values
+
+| Value | Meaning |
+|-------|---------|
+| `null` | **Absent.** The register is authoritative and says there is none (no partner, no rent). |
+| *unknown* | **A fact nobody has yet.** It carries the names of the missing facts. |
+| boolean, text | As written. |
+| number | An exact decimal (BigInt mantissa and scale). Addition, subtraction and multiplication are exact; division carries 28 decimal places. Nothing is ever rounded implicitly. |
+| date | Text in canonical `YYYY-MM-DD`. `$referencedate` is the record `{iso, year, month, day}` of the calculation date. |
+| list, record | As in JSON. |
+
+A string that starts with `$` is a reference. `$a.b` reads field `b` of record
+`a`. A field of an absent record is absent. A field of an unknown record is
+unknown. A field missing from a record is unknown for lack of `a.b`.
+
+## The two kinds of nothing (RFC-036)
+
+- An **absent** value may be tested (`EQUALS … null`, `IN`) and passed on.
+  Calculating with it, ordering it, or deciding on it (`NOT`, `AND`, `OR`, an
+  `IF` condition, a `FOREACH` filter or combine) is an error:
+  `OP: operand is null (absent) …`.
+- An **unknown** value propagates through every operation. The result names the
+  union of the missing facts. A definite operand still decides: `AND` with a
+  `false` is `false`, `OR` with a `true` is `true`. An `IF` whose condition is
+  unknown is unknown; it takes neither its branch nor its default.
+  `EQUALS` and `IN` are unknown when either side holds an unknown anywhere
+  inside it. The exception is `IN` with a definite match, which is `true`.
+- `nullable` is part of a field's declaration and defaults to `false`. A
+  `null` that reaches a parameter, input or output declared never absent is
+  refused where it arrives, and the message names where it came from
+  (`source register`, `parameter from caller`, `parameter from <law>`,
+  `<law>.<output>`, `skipped call to <law>`).
+
+## Versions
+
+A law's versions share its `$id`. On a calculation date the engine takes the
+latest version with `valid_from <= date`. A version without `valid_from` is
+always in force. If that version has a `valid_to` before the date, the law has
+**ended**: there is no fall-back to an older version, and the error states the
+data fact (`No version of law 'x' in force on D; last in force until E`).
+
+## Executing an article
+
+An output is computed by the article that declares it. Executing an article
+runs all of its actions, so an error in any action fails the whole article.
+The order of a run is:
+
+1. **Untranslatables / markings.** Mode `error` (the default) and `ignore`
+   refuse an unaccepted construct. `warn` runs the partial logic and notes it.
+   `propagate` runs it and taints every output of the article, and with it
+   every output that reads one of them.
+2. **Parameters.** A passed parameter must respect `nullable`. At the top level
+   a `null` for a parameter that is not nullable is the caller's error
+   (`… cannot be evaluated for nobody …`). An optional parameter that is not
+   passed is unknown for lack of itself. **Choice:** a *required* parameter
+   that is not passed is an error only when the article actually reads it.
+   The corpus scenarios rely on this: the Participatiewet runs without
+   `gemeente_code`, and a test about a spouse's age is never reached for
+   someone unmarried.
+3. **Inputs**, every one of them, in declaration order. Earlier inputs can feed
+   later ones. An input resolves by the first that applies:
+   1. a parameter of the same name passed by the caller (it bypasses the
+      register, never the declaration);
+   2. a data source, if one has a record for the key and holds the field.
+      Sources bound to this law come first, then unbound ones, by priority.
+      **Choice:** this also holds for an input that names another law, so an
+      unbound register column shadows a cross-law input of the same name
+      (the scoped-data-source scenarios pin exactly this);
+   3. `source.output` (with `source.regulation` for another law): the other
+      law's output, evaluated with `source.parameters`. Without
+      `parameters`, a reference into the same law passes the caller's
+      parameters through. A *required* parameter of the target that is `null`
+      skips the call and yields `null`, unless the target declares it nullable.
+      If it is unknown, the call is skipped and the input is that unknown. An
+      explicit call that leaves out a required parameter of the target is an
+      error, so a misspelled key cannot quietly become an unknown outcome;
+   4. otherwise it is unknown for lack of the input's name.
+4. **Open terms.** Every regulation whose article `implements` this term and
+   is in force is a candidate. A regulation carrying `gemeente_code`,
+   `provincie_code` or `waterschap_code` applies only where the parameters
+   name that code. Candidates are ordered by lex superior (regulatory layer),
+   then lex posterior (later `valid_from`). The first that gives a value
+   other than `null` fills the term; a silent (`null`) regulation passes the
+   turn. Otherwise the term's `default` actions apply, then `null` if the term
+   is optional. A required term with neither is an error. An implementation
+   that reads the law it fills sees that law *without its own filling*.
+5. **Hooks before** (`pre_actions`), then the **actions**, in dependency
+   order: reading an output of the same article computes it first. If an
+   output is assigned more than once, the last assignment wins. An action is
+   either `value: <operand>` or an operation written inline
+   (`operation: NOT, value: …`).
+6. **Overrides.** An output is replaced (or voided, `voids: true`) by an
+   `overrides` declaration from a law that is in the execution chain, or from
+   the same law. The overriding article sees the general rule with this
+   override held back. A voided output is not in the result; reading it is an
+   error saying it does not arise.
+7. **Outputs** declared never absent must not be `null`
+   (`output 'x' of L evaluated to null … not declared nullable`).
+8. **Hooks after** (`post_actions`).
+
+**Choice:** hooks fire for the articles evaluated at the top level, which is
+the decision being taken. A hook applies when its `applies_to.legal_character`
+(and `decision_type`, if given) matches the article's `produces`, or when its
+`applies_to.submission` matches `produces.submission.kind`. A plain evaluation
+is the decision itself, the `BESLUIT` stage of the Awb procedure, so hooks for
+later stages (`BEKENDMAKING`, …) do not fire. Hook outputs join the result
+with **reactive** provenance, or **override** provenance when an override
+replaced them. The requested outputs and the other outputs of their articles
+are **direct**.
+
+**Choice:** a result holds every output of the articles that were executed, not
+only the requested ones. The corpus scenarios evaluate one output and assert
+its siblings.
+
+## Operations
+
+| Operation | Semantics |
+|-----------|-----------|
+| `ADD` `SUBTRACT` `MULTIPLY` `DIVIDE` | Over `values`, left to right. Division by zero is an error. `ADD` concatenates if all operands are text, and flattens lists. |
+| `MIN` `MAX` | Over the flattened `values`; numbers or dates. An empty list gives `null`. |
+| `EQUALS` | Structural: numbers by value, a date string equal to the `{iso…}` form of that date, lists and records element-wise. `42` is not `"42"`. |
+| `GREATER_THAN` … `LESS_THAN_OR_EQUAL` | Numbers numerically; two dates chronologically. `value` is required. |
+| `AND` `OR` | Kleene logic over booleans, short-circuiting on the deciding value. |
+| `NOT` | Boolean negation. |
+| `IF` | The first case whose `when` holds; otherwise `default`, or `null` without one. (`SWITCH` is accepted as an alias.) |
+| `IN` | Membership in `values` (inline) or `value` (a list, or a single value). |
+| `LIST` | The evaluated `items`. |
+| `FOREACH` | See below. |
+| `ROUND` `CEIL` `FLOOR` | To `precision` decimal places, which may be negative. `ROUND` is half-up (ties away from zero). |
+| `AGE` | Complete years from `date_of_birth` to `reference_date`. |
+| `DATE_ADD` | Years, then months (clamped to the month's last day: 31 Jan + 1 month = 28/29 Feb), then weeks and days. |
+| `DATE` | From year, month and day; an impossible date is an error. |
+| `DAY_OF_WEEK` | 0 = Monday … 6 = Sunday. |
+| `DATE_DIFF` | Signed, `in: days / months / years`. Months and years count complete calendar units with the same clamping, so 31 Jan to 28 Feb is one month. |
+| `DATE_PART` | `in: year / month / day`. |
+| `START_OF` | `in: year / month`. |
+
+`FOREACH` evaluates `collection`: `null` is empty and a single value iterates
+once. At most 1000 elements. Each element gets a fresh scope binding `as`
+(default `item`) and, for a record, its fields. Outer `FOREACH` bindings are
+*not* visible inside, so an outer element reaches an inner iteration only
+through `collection`. An element whose `filter` is `false` is skipped; an
+unknown filter makes the result unknown. `combine` is `ADD` (empty: `0`),
+`MIN`/`MAX` (empty: `null`), `AND` (empty: `true`) or `OR` (empty: `false`).
+Without it, the result is the list. An unknown body makes `ADD`/`MIN`/`MAX`
+unknown, and `AND`/`OR` follow Kleene logic.
+
+Operation nesting is bounded at 100 levels and cross-law calls at 20. A cycle
+between articles is an error.
+
+## Scenarios
+
+Scenarios are Gherkin in the vocabulary of regelrecht's `bdd/grammar.yaml`.
+eyelee reads that file at run time, so it holds no copy of the sentences. A
+quoted value or a table cell is typed by its content: `true`, `false`, `null`
+(absence), JSON lists and records, numbers, and otherwise text. An empty table
+cell leaves the value out, which makes it unknown. A feature runs if all of its
+`@tier:` tags are supported; eyelee supports `core`, `provenance`,
+`untranslatable` and `notes`. Scenarios tagged `@wip` are skipped.
+
+## Notes
+
+A note anchors to legal text with an exact quote plus optional prefix and
+suffix. Resolution first looks for exact occurrences whose surroundings match:
+one is *found*, several are *ambiguous*. If there are none, it scores windows
+of the quote's length ±30% that share a significant word with it, using
+`0.5·sim(quote) + 0.25·sim(prefix) + 0.25·sim(suffix)` with normalised
+Levenshtein similarity. A score of at least 0.7 counts. Overlapping
+candidates collapse to the best one. A single candidate, or one more than
+0.1 ahead of the runner-up, is *found* (fuzzy); several close candidates are
+*ambiguous*; none at all is *orphaned*. An article-number hint never decides:
+the note follows the text.
+
+## Not implemented
+
+- Unit checking (`type_spec.unit`). Units are labels; eyelee does not yet
+  refuse combining, say, `eurocent` with `days`.
+- Stage-by-stage procedure execution (yielding between Awb stages).
+- `resolve` actions, `valid_from: '#…'` references, and execution receipts
+  with content hashes.

@@ -1,0 +1,15 @@
+{
+  "description": "BW 5:42 leaves the distance to the boundary open for the municipality; Amsterdam's APV fills it in for trees in the centre (1 metre instead of 2).",
+  "law": "burgerlijk_wetboek_boek_5",
+  "outputs": [
+    "minimale_afstand_cm",
+    "minimale_afstand_m"
+  ],
+  "date": "2024-06-01",
+  "parameters": {
+    "gemeente_code": "GM0363",
+    "type_beplanting": "boom",
+    "postcode": 1012
+  },
+  "data": []
+}

@@ -1,0 +1,35 @@
+{
+  "name": "eyelee",
+  "version": "0.1.0",
+  "description": "A law execution engine with Answer, Reason and Check.",
+  "type": "module",
+  "main": "./src/index.js",
+  "bin": {
+    "eyelee": "./eyelee.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "conformance": "node eyelee.js conformance/regelrecht/regulation conformance/regelrecht/bdd/conformance",
+    "start": "node eyelee.js conformance/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01",
+    "playground": "node src/playground-server.js",
+    "version": "node scripts/sync-version.js && git add playground.html",
+    "pages": "node scripts/prepare-pages.js"
+  },
+  "keywords": [
+    "law",
+    "rules-as-code",
+    "regelrecht",
+    "explainable",
+    "reasoning"
+  ],
+  "license": "MIT",
+  "author": "Jos De Roo",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eyereasoner/eyelee.git"
+  },
+  "homepage": "https://eyereasoner.github.io/eyelee"
+}
