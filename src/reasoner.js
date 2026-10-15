@@ -1,6 +1,6 @@
 // Executes Prolog expression dependencies with the pinned eyelang reasoner.
 // Host replies are scoped register lookups and grounded exact-domain primitives.
-import { parse, infer, say } from '../vendor/eyelang/language.js';
+import { parse, infer, say } from 'eyelang/src/language.js';
 import { runtimeSource } from './runtime-program.js';
 import { Expression, toTerm, fromTerm, text, integer, predicate, compound } from './prolog-values.js';
 import { compileExpression } from './prolog-compiler.js';

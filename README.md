@@ -5,7 +5,7 @@
 [Semantics](SEMANTICS.md)
 
 eyelee evaluates Dutch-law knowledge written in **Prolog `.pl` files** using the
-[eyelang](https://github.com/eyereasoner/eyelang) reasoner. It returns Answer,
+[eyelang](https://www.npmjs.com/package/eyelang) npm package as its reasoner. It returns Answer,
 Reason and Check, preserving exact decimal amounts, unknown and absent values,
 law versions, references, hooks, and overrides.
 
@@ -16,9 +16,11 @@ these examples do not establish legal validity.
 
 ## Run a question
 
-Node.js 18 or later is required. No packages to install or build step:
+Node.js 18 or later is required. Install the locked dependencies once; there is
+no build step:
 
 ```sh
+npm ci
 node eyelee.js knowledge/regelrecht/regulation \
   --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01
 ```
@@ -137,7 +139,9 @@ Run `node src/playground-server.js` and open
 http://127.0.0.1:8000/playground.html. Choose a question or law and press
 **Evaluate** (Ctrl/⌘ + Enter). **Run a scenario** runs any selected `.feature`
 file, including edited text. The browser loads the same `.pl` knowledge and
-executes the same pinned eyelang reasoner as the CLI.
+executes the same installed eyelang reasoner as the CLI. An import map resolves
+the npm module to a local asset served from the installed package. Website
+staging copies that same source and its MIT license into `assets/eyelang/`.
 
 ## Library
 
@@ -187,14 +191,14 @@ does not interpret YAML text.
 | `src/prolog-compiler.js` · `src/prolog-values.js` | Rulework import, metadata, and value encoding |
 | `src/engine.js` | Legal versions, articles, inputs, open terms, hooks, and overrides |
 | `src/operations.js` · `src/decimal.js` · `src/values.js` | Grounded domain primitives, exact amounts, and dates |
-| `vendor/eyelang/` | Pinned eyelang v0.1.0 source, license, commit, and checksum |
+| `package.json` · `package-lock.json` | eyelang runtime dependency, pinned version, and package integrity |
 | `conformance/regelrecht/` | Unchanged upstream corpus, grammar, scenarios, and golden cases |
 | `scripts/import-regelrecht.js` | Reproducible conversion from upstream fixtures |
 | `test/` | Conformance, native-rule, compiler, browser-asset, and website-path tests |
 
 ## License
 
-MIT for eyelee and the vendored eyelang reasoner; see their license files.
+MIT for eyelee and the eyelang npm dependency; see their license files.
 The upstream material in `conformance/regelrecht/` and its converted derivatives
 in `knowledge/regelrecht/` retain EUPL-1.2. Their provenance is recorded in each
 knowledge directory's documentation.

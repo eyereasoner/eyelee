@@ -26,7 +26,7 @@ assert (`declares as never absent`, `operand is null`, `not declared nullable`,
 - `knowledge/runtime.pl`: expression control flow executed by eyelang.
 - `knowledge/regelrecht/`: reproducibly imported Prolog law versions and grammar.
 - `knowledge/examples/`: native Prolog ruleworks.
-- `vendor/eyelang/`: pinned upstream reasoner, license, commit, and checksum.
+- `package.json`, `package-lock.json`: pinned eyelang npm dependency and package integrity.
 - `src/reasoner.js`: scoped requests, grounded domain replies, and proof evidence.
 - `src/prolog-compiler.js`, `src/prolog-values.js`: Prolog metadata and values.
 - `src/operations.js`: grounded domain operations and the rules for absent (`null`) and
@@ -57,10 +57,11 @@ assert (`declares as never absent`, `operand is null`, `not declared nullable`,
 
 ## Commands
 
-Node.js 18 or later is required. The project uses ES modules and has no
-package dependencies or build step.
+Node.js 18 or later is required. The project uses ES modules and depends on the
+eyelang npm package. Install dependencies with `npm ci`; there is no build step.
 
 ```sh
+npm ci
 node eyelee.js knowledge/regelrecht/regulation --query examples/zorgtoeslag-2025.json
 node eyelee.js knowledge/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01
 node eyelee.js knowledge/regelrecht/regulation --scenarios conformance/regelrecht

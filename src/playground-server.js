@@ -2,14 +2,16 @@
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
 const root = new URL('../', import.meta.url);
+const eyelangSource = createRequire(import.meta.url).resolve('eyelang/src/language.js');
 const allowed = [
   /^playground\.html$/,
   /^(README|SEMANTICS)\.md$/,
   /^src\/[a-z-]+\.js$/,
-  /^vendor\/eyelang\/language\.js$/,
+  /^assets\/eyelang\/language\.js$/,
   /^knowledge\/manifest\.json$/,
   /^knowledge\/(?:[A-Za-z0-9_./-]+)\.pl$/,
   /^examples\/[a-z0-9-]+\.json$/,
@@ -37,7 +39,7 @@ export function createPlaygroundServer() {
       return;
     }
     try {
-      const content = await readFile(new URL(path, root));
+      const content = await readFile(path === 'assets/eyelang/language.js' ? eyelangSource : new URL(path, root));
       response.writeHead(200, { 'Content-Type': `${types[path.split('.').pop()] || 'text/plain'}; charset=utf-8` });
       response.end(request.method === 'HEAD' ? undefined : content);
     } catch {

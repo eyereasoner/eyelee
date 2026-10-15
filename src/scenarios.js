@@ -5,7 +5,7 @@
 // This module implements those actions, so any scenario written for the
 // upstream engine runs here unchanged.
 
-import { parse } from '../vendor/eyelang/language.js';
+import { parse } from 'eyelang/src/language.js';
 import { fromTerm } from './prolog-values.js';
 import { parseFeature } from './gherkin.js';
 import { Dec } from './decimal.js';

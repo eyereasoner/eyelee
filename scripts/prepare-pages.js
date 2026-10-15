@@ -2,7 +2,8 @@
 // SEMANTICS, and the playground with the engine and the corpus it loads.
 
 import { cp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -10,9 +11,13 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export async function preparePages(destination, basePath = '/eyelee') {
   await rm(destination, { recursive: true, force: true });
   await mkdir(destination, { recursive: true });
-  for (const file of ['src', 'vendor', 'knowledge', 'examples', 'conformance', 'README.md', 'SEMANTICS.md', 'LICENSE.md']) {
+  for (const file of ['src', 'knowledge', 'examples', 'conformance', 'README.md', 'SEMANTICS.md', 'LICENSE.md']) {
     await cp(resolve(root, file), resolve(destination, file), { recursive: true });
   }
+  const eyelangSource = createRequire(import.meta.url).resolve('eyelang/src/language.js');
+  await mkdir(resolve(destination, 'assets/eyelang'), { recursive: true });
+  await cp(eyelangSource, resolve(destination, 'assets/eyelang/language.js'));
+  await cp(resolve(dirname(eyelangSource), '../LICENSE.md'), resolve(destination, 'assets/eyelang/LICENSE.md'));
   const write = (file, text) => writeFile(resolve(destination, file), text);
   await mkdir(resolve(destination, 'playground'), { recursive: true });
   await mkdir(resolve(destination, 'SEMANTICS'), { recursive: true });

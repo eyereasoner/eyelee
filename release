@@ -31,6 +31,7 @@ if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
 fi
 
 # Release only what passes the tests.
+npm ci
 npm test
 
 # Update the package version without letting npm create a commit or tag;

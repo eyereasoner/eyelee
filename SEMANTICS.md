@@ -9,9 +9,11 @@ execution and conformance results do not establish legal validity.
 ## Prolog knowledge and reasoner boundary
 
 Runtime laws and the scenario grammar use `.pl`, with the Prolog syntax supported
-by the pinned eyelang v0.1.0 reasoner. The copy in `vendor/eyelang/` is byte-for-byte
-upstream source, identified by commit and SHA-256 in `UPSTREAM.json`, with its MIT
-license. It has no Node-only dependencies and runs in both CLI and browser.
+by the eyelang v0.6.2 npm dependency. `package.json` pins its version and
+`package-lock.json` records its registry source and integrity. CLI modules import
+`eyelang/src/language.js`; the browser import map resolves that same module to
+an unchanged local copy from the installed package. Website staging includes
+the source and its MIT license. The reasoner runs in both CLI and browser.
 
 **Choice:** retain a domain boundary for registers, exact `Dec` arithmetic,
 calendar operations, and structural values. `knowledge/runtime.pl` controls

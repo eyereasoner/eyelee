@@ -1,8 +1,0 @@
-{
-  "repository": "https://github.com/eyereasoner/eyelang",
-  "version": "0.1.0",
-  "commit": "136c8ce1f2f607c929f1ffb6a36213100388fc68",
-  "path": "src/language.js",
-  "sha256": "7ac3c491ba24198d9e6f078521042d32039f3a61b4b481441c13427f15402271",
-  "license": "MIT"
-}

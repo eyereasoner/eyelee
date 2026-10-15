@@ -32,5 +32,8 @@
     "type": "git",
     "url": "git+https://github.com/eyereasoner/eyelee.git"
   },
-  "homepage": "https://eyereasoner.github.io/eyelee"
+  "homepage": "https://eyereasoner.github.io/eyelee",
+  "dependencies": {
+    "eyelang": "0.6.2"
+  }
 }

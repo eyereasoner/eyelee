@@ -1,6 +1,6 @@
 // One-way conversion of the public regelrecht data contract to Prolog facts.
 // Control flow is defined in knowledge/runtime.pl and executed by eyelang.
-import { parse } from '../vendor/eyelang/language.js';
+import { parse } from 'eyelang/src/language.js';
 import { Expression, toTerm, fromTerm, termSource, predicate, text, compound } from './prolog-values.js';
 import { Unknown } from './values.js';
 import { Dec } from './decimal.js';

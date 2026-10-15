@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { Engine } from '../src/engine.js';
 import { evaluateExpression } from '../src/reasoner.js';
 import { compileRulework, readRulework } from '../src/prolog-compiler.js';
@@ -125,10 +125,12 @@ test('all imported laws reproduce the unchanged upstream contract as .pl source'
   assert.equal(count,38);
 });
 
-test('the browser embeds exactly the checked-in Prolog runtime and pinned eyelang source',()=>{
+test('the embedded runtime matches Prolog source and eyelang is installed at the locked version',()=>{
   assert.equal(runtimeSource,read('knowledge/runtime.pl'));
-  const upstream=JSON.parse(read('vendor/eyelang/UPSTREAM.json'));
-  assert.equal(upstream.version,'0.1.0');
-  assert.equal(createHash('sha256').update(read('vendor/eyelang/language.js')).digest('hex'),upstream.sha256);
-  assert.ok(read('vendor/eyelang/LICENSE.md').includes('MIT License'));
+  const pkg=JSON.parse(read('package.json'));
+  const lock=JSON.parse(read('package-lock.json'));
+  const installed=JSON.parse(readFileSync(createRequire(import.meta.url).resolve('eyelang/package.json'),'utf8'));
+  assert.equal(installed.version,pkg.dependencies.eyelang);
+  assert.equal(lock.packages['node_modules/eyelang'].version,installed.version);
+  assert.match(lock.packages['node_modules/eyelang'].integrity,/^sha512-/);
 });
