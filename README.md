@@ -16,6 +16,10 @@ these examples do not establish legal validity.
 
 ## Run a question
 
+The eyelang dependency follows npm's `latest` tag. Run `npm update eyelang` to
+fetch its latest release and update the lockfile. `npm ci` installs the version
+already recorded in that lockfile.
+
 Node.js 18 or later is required. Install the locked dependencies once; there is
 no build step:
 

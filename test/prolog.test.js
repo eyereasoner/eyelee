@@ -130,7 +130,8 @@ test('the embedded runtime matches Prolog source and eyelang is installed at the
   const pkg=JSON.parse(read('package.json'));
   const lock=JSON.parse(read('package-lock.json'));
   const installed=JSON.parse(readFileSync(createRequire(import.meta.url).resolve('eyelang/package.json'),'utf8'));
-  assert.equal(installed.version,pkg.dependencies.eyelang);
+  assert.equal(pkg.dependencies.eyelang,'latest');
+  assert.equal(lock.packages[''].dependencies.eyelang,pkg.dependencies.eyelang);
   assert.equal(lock.packages['node_modules/eyelang'].version,installed.version);
   assert.match(lock.packages['node_modules/eyelang'].integrity,/^sha512-/);
 });

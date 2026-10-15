@@ -9,8 +9,10 @@ execution and conformance results do not establish legal validity.
 ## Prolog knowledge and reasoner boundary
 
 Runtime laws and the scenario grammar use `.pl`, with the Prolog syntax supported
-by the eyelang v0.6.2 npm dependency. `package.json` pins its version and
-`package-lock.json` records its registry source and integrity. CLI modules import
+by the eyelang npm dependency, currently locked at v5.0.0. `package.json` selects
+the npm `latest` tag; `package-lock.json` records the resolved version, registry
+source and integrity. `npm update eyelang` refreshes that lock to the latest
+release; `npm ci` installs the recorded version. CLI modules import
 `eyelang/src/language.js`; the browser import map resolves that same module to
 an unchanged local copy from the installed package. Website staging includes
 the source and its MIT license. The reasoner runs in both CLI and browser.
