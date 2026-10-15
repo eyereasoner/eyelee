@@ -1,4 +1,4 @@
-// Writes conformance/regelrecht/manifest.json: the ruleworks, scenarios and
+// Writes knowledge/manifest.json: the ruleworks, scenarios and
 // grammar the browser playground loads (a browser cannot list directories).
 
 import fs from 'node:fs';
@@ -12,8 +12,8 @@ const rel = (f) => path.relative(root, f).split(path.sep).join('/');
 
 export function manifest() {
   return {
-    grammar: rel(path.join(base, 'bdd', 'grammar.yaml')),
-    laws: walk(path.join(base, 'regulation'), ['.yaml']).map(rel),
+    grammar: 'knowledge/regelrecht/grammar.pl',
+    laws: [...walk(path.join(root, 'knowledge', 'regelrecht', 'regulation'), ['.pl']), ...walk(path.join(root, 'knowledge', 'examples'), ['.pl'])].map(rel),
     scenarios: [
       ...walk(path.join(base, 'bdd', 'conformance'), ['.feature']),
       ...walk(path.join(base, 'regulation'), ['.feature']),
@@ -23,6 +23,6 @@ export function manifest() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  fs.writeFileSync(path.join(base, 'manifest.json'), JSON.stringify(manifest(), null, 2) + '\n');
-  console.log('wrote conformance/regelrecht/manifest.json');
+  fs.writeFileSync(path.join(root, 'knowledge', 'manifest.json'), JSON.stringify(manifest(), null, 2) + '\n');
+  console.log('wrote knowledge/manifest.json');
 }

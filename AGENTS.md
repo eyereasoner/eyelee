@@ -1,7 +1,7 @@
 # Working on eyelee
 
-eyelee is an independent, dependency-free JavaScript engine for machine-readable
-Dutch law in the regelrecht format. It answers questions with ARC: Answer,
+eyelee evaluates Dutch-law knowledge in Prolog `.pl` files with the eyelang
+reasoner and a dependency-free JavaScript legal coordinator. It answers questions with ARC: Answer,
 Reason and Check. Describe what it implements and where it stops, and keep
 behaviour that has been demonstrated apart from design goals. Keep explanations
 concrete, error messages specific, and user-facing text direct. Do not claim
@@ -9,7 +9,7 @@ legal validity: a rulework is an interpretation of the law, not the law.
 
 ## Independence
 
-eyelee is meant to be a second implementation of the format, built from its
+The legal coordinator follows the regelrecht format, built from its
 public contract: the JSON schema, the documentation, `bdd/grammar.yaml`, the
 conformance scenarios and the golden cases. Derive behaviour from that
 contract and from the scenarios, not by translating the reference engine's
@@ -23,13 +23,19 @@ assert (`declares as never absent`, `operand is null`, `not declared nullable`,
 - `src/engine.js`: laws and versions, article execution (parameters, inputs,
   data sources, open terms, actions, overrides, hooks), the derivation trace
   and the Check facts.
-- `src/operations.js`: the operations and the rules for absent (`null`) and
+- `knowledge/runtime.pl`: expression control flow executed by eyelang.
+- `knowledge/regelrecht/`: reproducibly imported Prolog law versions and grammar.
+- `knowledge/examples/`: native Prolog ruleworks.
+- `vendor/eyelang/`: pinned upstream reasoner, license, commit, and checksum.
+- `src/reasoner.js`: scoped requests, grounded domain replies, and proof evidence.
+- `src/prolog-compiler.js`, `src/prolog-values.js`: Prolog metadata and values.
+- `src/operations.js`: grounded domain operations and the rules for absent (`null`) and
   unknown values (RFC-036).
 - `src/decimal.js`: exact decimal arithmetic (BigInt mantissa and scale).
 - `src/values.js`: the value model, `Unknown`, and date arithmetic.
-- `src/yaml.js`: the YAML reader (YAML 1.2 core schema) for ruleworks.
+- `src/yaml.js`, `src/import-yaml.js`: explicit YAML import and conformance adapters; runtime laws are Prolog.
 - `src/gherkin.js` and `src/scenarios.js`: the Gherkin reader and the scenario
-  actions; step matchers are generated from `grammar.yaml` at run time.
+  actions; step matchers are generated from `knowledge/regelrecht/grammar.pl` at run time.
 - `src/notes.js`: anchoring notes to legal text (exact and fuzzy).
 - `src/explain.js`: rendering Answer, Reason and Check.
 - `src/corpus.js`: loading laws and scenarios from disk (Node only).
@@ -44,7 +50,8 @@ assert (`declares as never absent`, `operand is null`, `not declared nullable`,
 - `SEMANTICS.md`: the semantics eyelee implements, including its choices.
 - `README.md`: the introduction, usage and example index.
 - `scripts/prepare-pages.js`, `scripts/pages-layout.html`: website staging.
-- `scripts/manifest.js`: regenerates `conformance/regelrecht/manifest.json`.
+- `scripts/import-regelrecht.js`: reproduces imported Prolog knowledge and the embedded runtime.
+- `scripts/manifest.js`: regenerates `knowledge/manifest.json`.
 - `scripts/sync-version.js`, `release`, `.github/workflows/`: versions,
   releases and GitHub Pages deployment.
 
@@ -54,12 +61,13 @@ Node.js 18 or later is required. The project uses ES modules and has no
 package dependencies or build step.
 
 ```sh
-node eyelee.js conformance/regelrecht/regulation --query examples/zorgtoeslag-2025.json
-node eyelee.js conformance/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01
-node eyelee.js conformance/regelrecht/regulation conformance/regelrecht/bdd/conformance
+node eyelee.js knowledge/regelrecht/regulation --query examples/zorgtoeslag-2025.json
+node eyelee.js knowledge/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01
+node eyelee.js knowledge/regelrecht/regulation --scenarios conformance/regelrecht
 node src/playground-server.js
 node --test test/units.test.js
 npm test
+node scripts/import-regelrecht.js
 node scripts/manifest.js
 node scripts/prepare-pages.js
 git diff --check
@@ -78,6 +86,9 @@ ignored.
   calculated with or decided on. Unknown propagates and names its missing
   facts, and a definite operand still decides `AND`/`OR`. Enforce `nullable`
   where a value crosses into an article, and name where the value came from.
+- Express new declarative logic with ordinary Prolog clauses and `.pl` files.
+  Do not add YAML interpretation to runtime law loading or a JavaScript fallback
+  for IF/AND/OR/FOREACH. The pinned eyelang source stays unmodified.
 - Numbers are `Dec`. Never round implicitly and never route amounts through
   binary floats; convert to a JavaScript number only for output.
 - Dates are canonical `YYYY-MM-DD` text. Month and year arithmetic clamps to
@@ -92,7 +103,7 @@ ignored.
 
 - Do not edit files under `conformance/regelrecht/`. To update them, copy a
   newer upstream commit verbatim, record its hash and date in
-  `conformance/regelrecht/README.md`, and run `node scripts/manifest.js`.
+  `conformance/regelrecht/README.md`, and run `node scripts/import-regelrecht.js` and `node scripts/manifest.js`.
 - A failing upstream scenario is a question about eyelee's semantics, not a
   test to adjust. If upstream marks a scenario `@wip`, it stays skipped.
 - Supported scenario tiers are `core`, `provenance`, `untranslatable` and

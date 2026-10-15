@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { importRuleworkYaml } from '../src/import-yaml.js';
 import { parseYaml } from '../src/yaml.js';
 import { Dec } from '../src/decimal.js';
 import { Engine } from '../src/engine.js';
@@ -67,7 +68,7 @@ test('decimal: exact arithmetic and explicit rounding', () => {
 
 function law(actions, extra = '') {
   const e = new Engine();
-  e.loadLaw(`$id: t
+  e.loadLaw(importRuleworkYaml(`$id: t
 regulatory_layer: WET
 publication_date: '2025-01-01'
 articles:
@@ -83,7 +84,7 @@ ${extra}
         actions:
           - output: r
             value: ${JSON.stringify(actions)}
-`);
+`));
   return (params = {}) => toPlain(e.evaluate('t', ['r'], params, '2025-01-01').outputs.r);
 }
 
@@ -126,7 +127,7 @@ test('notes: exact, fuzzy and orphaned anchors', () => {
 test('cli: Answer, Reason and Check', () => {
   const out = execFileSync(process.execPath, [
     path.join(here, '..', 'eyelee.js'),
-    path.join(here, '..', 'conformance', 'regelrecht', 'regulation'),
+    path.join(here, '..', 'knowledge', 'regelrecht', 'regulation'),
     '--law', 'vreemdelingenwet_2000', '--output', 'minister_is_bevoegd', '--date', '2026-01-01',
   ], { encoding: 'utf8' });
   assert.match(out, /^# Answer\nminister_is_bevoegd = true/);
@@ -140,6 +141,6 @@ test('cli: Answer, Reason and Check', () => {
 test('the playground manifest is up to date', async () => {
   const fs = await import('node:fs');
   const { manifest } = await import('../scripts/manifest.js');
-  const onDisk = JSON.parse(fs.readFileSync(path.join(here, '..', 'conformance', 'regelrecht', 'manifest.json'), 'utf8'));
+  const onDisk = JSON.parse(fs.readFileSync(path.join(here, '..', 'knowledge', 'manifest.json'), 'utf8'));
   assert.deepEqual(onDisk, manifest(), 'run: node scripts/manifest.js');
 });

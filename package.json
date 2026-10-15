@@ -1,7 +1,7 @@
 {
   "name": "eyelee",
   "version": "0.1.1",
-  "description": "A law execution engine with Answer, Reason and Check.",
+  "description": "Dutch-law knowledge in Prolog, evaluated with eyelang and Answer, Reason and Check.",
   "type": "module",
   "main": "./src/index.js",
   "bin": {
@@ -9,11 +9,12 @@
   },
   "scripts": {
     "test": "node --test",
-    "conformance": "node eyelee.js conformance/regelrecht/regulation conformance/regelrecht/bdd/conformance",
-    "start": "node eyelee.js conformance/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01",
+    "conformance": "node eyelee.js knowledge/regelrecht/regulation --scenarios conformance/regelrecht",
+    "start": "node eyelee.js knowledge/regelrecht/regulation --law vreemdelingenwet_2000 --output minister_is_bevoegd --date 2026-01-01",
     "playground": "node src/playground-server.js",
     "version": "node scripts/sync-version.js && git add playground.html",
-    "pages": "node scripts/prepare-pages.js"
+    "pages": "node scripts/prepare-pages.js",
+    "import:regelrecht": "node scripts/import-regelrecht.js"
   },
   "keywords": [
     "law",

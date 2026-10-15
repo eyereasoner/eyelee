@@ -50,7 +50,7 @@ export function deepUnknown(v) {
   return names;
 }
 
-// Convert parsed YAML / JSON data into engine values.
+// Convert decoded Prolog / JSON data into engine values.
 export function toValue(x) {
   if (x === null || x === undefined) return null;
   if (x instanceof Dec || x instanceof Unknown) return x;

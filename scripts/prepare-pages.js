@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export async function preparePages(destination, basePath = '/eyelee') {
   await rm(destination, { recursive: true, force: true });
   await mkdir(destination, { recursive: true });
-  for (const file of ['src', 'examples', 'conformance', 'README.md', 'SEMANTICS.md', 'LICENSE.md']) {
+  for (const file of ['src', 'vendor', 'knowledge', 'examples', 'conformance', 'README.md', 'SEMANTICS.md', 'LICENSE.md']) {
     await cp(resolve(root, file), resolve(destination, file), { recursive: true });
   }
   const write = (file, text) => writeFile(resolve(destination, file), text);

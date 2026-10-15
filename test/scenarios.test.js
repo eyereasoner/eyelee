@@ -13,8 +13,8 @@ import { loadGrammar, runFeature } from '../src/scenarios.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'conformance', 'regelrecht');
 const engine = new Engine();
-const { problems } = loadCorpus(engine, path.join(root, 'regulation'));
-const grammar = loadGrammar(fs.readFileSync(path.join(root, 'bdd', 'grammar.yaml'), 'utf8'));
+const { problems } = loadCorpus(engine, path.join(root, '..', '..', 'knowledge', 'regelrecht', 'regulation'));
+const grammar = loadGrammar(fs.readFileSync(path.join(root, '..', '..', 'knowledge', 'regelrecht', 'grammar.pl'), 'utf8'));
 
 test('every rulework in the corpus loads', () => {
   assert.deepEqual(problems, []);

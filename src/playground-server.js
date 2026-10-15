@@ -9,12 +9,13 @@ const allowed = [
   /^playground\.html$/,
   /^(README|SEMANTICS)\.md$/,
   /^src\/[a-z-]+\.js$/,
+  /^vendor\/eyelang\/language\.js$/,
+  /^knowledge\/manifest\.json$/,
+  /^knowledge\/(?:[A-Za-z0-9_./-]+)\.pl$/,
   /^examples\/[a-z0-9-]+\.json$/,
-  /^conformance\/regelrecht\/manifest\.json$/,
-  /^conformance\/regelrecht\/bdd\/grammar\.yaml$/,
-  /^conformance\/regelrecht\/(regulation|bdd\/conformance)\/[A-Za-z0-9_./-]+\.(yaml|feature)$/,
+  /^conformance\/regelrecht\/(regulation|bdd\/conformance)\/[A-Za-z0-9_./-]+\.feature$/,
 ];
-const types = { html: 'text/html', js: 'text/javascript', json: 'application/json', md: 'text/markdown', yaml: 'text/yaml', feature: 'text/plain' };
+const types = { html: 'text/html', js: 'text/javascript', json: 'application/json', md: 'text/markdown', pl: 'text/plain', feature: 'text/plain' };
 
 export function createPlaygroundServer() {
   return createServer(async (request, response) => {

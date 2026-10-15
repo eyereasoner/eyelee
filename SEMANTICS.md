@@ -1,12 +1,81 @@
 # eyelee semantics
 
-This is the reading of the regelrecht law format that eyelee implements. It
-was written from the format's public contract: the JSON schema, the
-documentation, the canonical scenario grammar, the conformance scenarios and
-the golden cases. The reference engine's source was consulted only where
-the contract leaves a choice open. Those choices are marked **Choice** below,
-so they can be compared and argued about. Making them explicit is what a second
-implementation is for.
+eyelee executes Prolog knowledge with eyelang and applies the regelrecht
+public contract for legal execution. The unchanged upstream scenarios and golden
+cases remain the behavioral reference. Choices left open by that contract are
+marked **Choice** below. A rulework is an interpretation of the law, not the law;
+execution and conformance results do not establish legal validity.
+
+## Prolog knowledge and reasoner boundary
+
+Runtime laws and the scenario grammar use `.pl`, with the Prolog syntax supported
+by the pinned eyelang v0.1.0 reasoner. The copy in `vendor/eyelang/` is byte-for-byte
+upstream source, identified by commit and SHA-256 in `UPSTREAM.json`, with its MIT
+license. It has no Node-only dependencies and runs in both CLI and browser.
+
+**Choice:** retain a domain boundary for registers, exact `Dec` arithmetic,
+calendar operations, and structural values. `knowledge/runtime.pl` controls
+expression dependencies, first-matching IF branches, short-circuiting Kleene
+AND/OR, collection filters, and which bodies run. The host supplies only the
+grounded requests derived by these clauses; it does not execute an alternative
+JavaScript expression interpreter. eyelang then derives the expression answer.
+Native Prolog predicates can perform arithmetic and comparisons directly.
+
+Law-version selection, article parameters and inputs, cross-law execution, open
+terms, hooks, overrides, nullability enforcement, and note anchoring remain in
+the legal coordinator. This boundary preserves those behaviors while sharing
+one logical inference implementation with eyelang.
+
+The runtime metadata predicates are:
+
+| Predicate | Meaning |
+| --- | --- |
+| `law(Id)` | Exactly one law identity per file |
+| `law_property(Name, Value)` | Version, regulatory layer, territory, and other law metadata |
+| `article(Number, Text)` | Article identity and legal text |
+| `article_property(Number, Name, Value)` | Other article metadata such as its URL |
+| `definition(Number, Name, Value)` | A named definition, possibly an expression |
+| `article_rule(Number, Name, Value)` | Open terms, hooks, overrides, and other machine-readable declarations |
+| `execution_property(Number, Name, Value)` | Imported execution declarations and action order |
+| `parameter(Number, Name, Type, Required, Nullable)` | Compact native parameter declaration |
+| `output(Number, Name, Type, Nullable)` | Compact native output declaration |
+| `rule(Number, Output, Predicate, Inputs)` | Native `Predicate(Scope, Value)` producing an output |
+
+Metadata records are `record([field(Name, Value), ...])`; arrays use proper
+Prolog lists. Text uses double quotes, booleans use `true` / `false`, absence
+uses `null`, unknown values use `unknown([MissingName, ...])`, and numbers use
+`decimal(Mantissa, Scale)`. Amounts never travel through Prolog binary64 literals;
+a bare integer is also an exact numeric result. `decimal/2` requires an integer
+mantissa and a nonnegative safe-integer scale.
+
+`rule/4` names the input references it reads. The coordinator resolves these
+under the same parameter/input rules as any imported expression and supplies
+`binding(Scope, Name, Value)` facts. A native predicate must derive exactly one
+ground value. No value is a reasoner error; distinct values are an ambiguity
+error. Missing facts and absence need explicit clauses just as ordinary native
+Prolog values do. Separate evaluations and collection elements have separate
+scopes. A rulework contains knowledge, not top-level queries or assertions;
+`Engine.evaluate` supplies the scoped question and performs the legal checks.
+
+Imported expressions use `ee_literal`, `ee_reference`, `ee_arguments`,
+`ee_primitive`, `ee_conditional`, `ee_logical`, and `ee_foreach` facts. These are
+domain predicates with ordinary Prolog term syntax; their executable clauses
+are in `knowledge/runtime.pl`. `expression(Id)` links an action or definition
+to its result. Generated runtime source is embedded in `src/runtime-program.js`
+so synchronous library calls and the browser use the same checked-in clauses;
+a regression test verifies byte-for-byte agreement with the `.pl` source.
+
+The structured trace retains the complete selected Prolog proof, including the
+request premises behind grounded host replies. Human-readable Reason output
+shows concrete operations, native arithmetic checks, and the legal article
+chain. A proof records the selected derivation; it is not an independent
+certificate of the truth of supplied register data or legal interpretation.
+
+**Choice:** the original upstream YAML corpus and grammar remain unchanged as
+conformance fixtures. `scripts/import-regelrecht.js` converts them reproducibly
+to `.pl`; golden inputs use the same explicit import adapter before execution.
+The CLI, library's law loader, and browser evaluate Prolog source. Imported
+files may be regenerated intentionally; native examples are maintained separately.
 
 ## Values
 
@@ -15,7 +84,7 @@ implementation is for.
 | `null` | **Absent.** The register is authoritative and says there is none (no partner, no rent). |
 | *unknown* | **A fact nobody has yet.** It carries the names of the missing facts. |
 | boolean, text | As written. |
-| number | An exact decimal (BigInt mantissa and scale). Addition, subtraction and multiplication are exact; division carries 28 decimal places. Nothing is ever rounded implicitly. |
+| number | An exact decimal (BigInt mantissa and scale). Addition, subtraction and multiplication are exact; division carries 28 decimal places with half-up rounding. Other arithmetic does not round implicitly. |
 | date | Text in canonical `YYYY-MM-DD`. `$referencedate` is the record `{iso, year, month, day}` of the calculation date. |
 | list, record | As in JSON. |
 
@@ -96,9 +165,8 @@ The order of a run is:
    that reads the law it fills sees that law *without its own filling*.
 5. **Hooks before** (`pre_actions`), then the **actions**, in dependency
    order: reading an output of the same article computes it first. If an
-   output is assigned more than once, the last assignment wins. An action is
-   either `value: <operand>` or an operation written inline
-   (`operation: NOT, value: …`).
+   output is assigned more than once, the last assignment wins. Imported actions retain the source contract’s value/operation distinction;
+   each is compiled to a Prolog expression result. Native actions use `rule/4`.
 6. **Overrides.** An output is replaced (or voided, `voids: true`) by an
    `overrides` declaration from a law that is in the execution chain, or from
    the same law. The overriding article sees the general rule with this
@@ -161,7 +229,8 @@ between articles is an error.
 ## Scenarios
 
 Scenarios are Gherkin in the vocabulary of regelrecht's `bdd/grammar.yaml`.
-eyelee reads that file at run time, so it holds no copy of the sentences. A
+The runtime reads its reproducible Prolog conversion,
+`knowledge/regelrecht/grammar.pl`; it does not hard-code the step sentences. A
 quoted value or a table cell is typed by its content: `true`, `false`, `null`
 (absence), JSON lists and records, numbers, and otherwise text. An empty table
 cell leaves the value out, which makes it unknown. A feature runs if all of its

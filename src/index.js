@@ -1,6 +1,7 @@
-// eyelee: an independent engine for machine-readable Dutch law.
+// eyelee: Prolog knowledge with eyelang inference and a legal coordinator.
 export { Engine, LawError, UNTRANSLATABLE_MODES } from './engine.js';
-export { parseYaml } from './yaml.js';
+export { compileRulework, readRulework } from './prolog-compiler.js';
+export { importRuleworkYaml, importGrammarYaml } from './import-yaml.js';
 export { Dec } from './decimal.js';
 export { Unknown, toValue, toPlain, show } from './values.js';
 export { OPERATIONS } from './operations.js';

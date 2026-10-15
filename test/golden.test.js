@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { importRuleworkYaml } from '../src/import-yaml.js';
 import { Engine } from '../src/engine.js';
 import { toPlain } from '../src/values.js';
 
@@ -21,8 +22,8 @@ for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
   for (const tc of suite.test_cases) {
     test(`${file}: ${tc.id} — ${tc.description}`, { skip: tc.generator_error ? 'generator error' : false }, () => {
       const engine = new Engine();
-      if (tc.law_yaml) engine.loadLaw(tc.law_yaml);
-      for (const l of tc.laws || []) engine.loadLaw(l.yaml);
+      if (tc.law_yaml) engine.loadLaw(importRuleworkYaml(tc.law_yaml));
+      for (const l of tc.laws || []) engine.loadLaw(importRuleworkYaml(l.yaml));
       const run = () => engine.evaluate(tc.law_id, [tc.output_name], tc.parameters || {}, tc.calculation_date);
       if (!tc.expected.success) {
         assert.throws(run, (e) => !tc.expected.error_type || e.kind === tc.expected.error_type);

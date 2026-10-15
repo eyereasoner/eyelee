@@ -11,11 +11,11 @@ import { renderArc, renderAnswer, renderReason, renderChecks } from './src/expla
 import { toPlain } from './src/values.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_GRAMMAR = path.join(here, 'conformance', 'regelrecht', 'bdd', 'grammar.yaml');
+const DEFAULT_GRAMMAR = path.join(here, 'knowledge', 'regelrecht', 'grammar.pl');
 
-const USAGE = `Usage: eyelee [options] <law.yaml | scenario.feature | directory> ...
+const USAGE = `Usage: eyelee [options] <law.pl | scenario.feature | directory> ...
 
-Laws (.yaml) are loaded; a directory loads every law under it and runs every
+Laws (.pl) are loaded; a directory loads every law under it and runs every
 scenario (.feature) under it. Scenarios given on the command line are run.
 
 Evaluate a law:
@@ -30,11 +30,13 @@ Evaluate a law:
 
 Options:
   --untranslatable <mode>  error (default), propagate, warn or ignore
-  --grammar <file>         the scenario vocabulary (default: bundled grammar.yaml)
+  --scenarios <directory>  run .feature files under a directory (without loading laws)
+  --grammar <file>         the scenario vocabulary (default: bundled grammar.pl)
   --verbose                list every scenario, not only the ones that fail
   --help                   show this help`;
 
 function main(argv) {
+  let featuresFrom = null;
   const opts = { params: {}, inputs: [], data: [], verbose: false, json: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -63,6 +65,7 @@ function main(argv) {
       opts.dataSources = q.data || [];
     }
     else if (a === '--untranslatable') opts.untranslatable = next();
+    else if (a === '--scenarios') featuresFrom = next();
     else if (a === '--grammar') opts.grammar = next();
     else if (a === '--verbose' || a === '-v') opts.verbose = true;
     else if (a === '--json') opts.json = true;
@@ -75,7 +78,7 @@ function main(argv) {
   }
 
   const engine = new Engine();
-  const features = [];
+  const features = featuresFrom ? walk(featuresFrom, ['.feature']) : [];
   const problems = [];
   for (const input of opts.inputs) {
     if (!fs.existsSync(input)) die(`no such file or directory: ${input}`);
@@ -115,7 +118,7 @@ function evaluateLaw(engine, opts) {
   // Reproducibility: the same question on the same law gives the same answer.
   const again = engine.evaluate(opts.law, opts.outputs, opts.params, date);
   const same = JSON.stringify(toPlain(again.outputs)) === JSON.stringify(toPlain(result.outputs));
-  result.checks.push(same ? 'a second, independent evaluation gives the same answer' : 'FAILED: a second evaluation gives a different answer');
+  result.checks.push(same ? 'a second evaluation gives the same answer' : 'FAILED: a second evaluation gives a different answer');
   if (!same) process.exitCode = 1;
   if (opts.json) {
     console.log(JSON.stringify({

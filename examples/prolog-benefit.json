@@ -1,0 +1,8 @@
+{
+  "description": "An illustrative allowance expressed as ordinary Prolog clauses, with exact eurocent amounts; not a real entitlement.",
+  "law": "illustrative_benefit",
+  "outputs": ["eligible", "amount"],
+  "date": "2025-01-01",
+  "parameters": { "income": 187654.32 },
+  "data": []
+}

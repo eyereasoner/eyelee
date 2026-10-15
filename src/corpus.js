@@ -2,7 +2,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseYaml } from './yaml.js';
 
 export function walk(dir, exts) {
   const out = [];
@@ -17,30 +16,20 @@ export function walk(dir, exts) {
   return out;
 }
 
-// Load every rulework under `dir`. YAML files that are not ruleworks (no
-// `articles`) are passed over; a rulework that does not load is reported.
+// Load runtime knowledge from .pl files. Upstream YAML is an import fixture.
 export function loadCorpus(engine, dir) {
   const loaded = [];
   const problems = [];
-  for (const file of walk(dir, ['.yaml', '.yml'])) {
-    const r = loadLawFile(engine, file);
-    if (r.id) loaded.push(r.id);
-    else if (r.error) problems.push({ file, error: r.error });
+  for (const file of walk(dir, ['.pl'])) {
+    const result = loadLawFile(engine, file);
+    if (result.id) loaded.push(result.id);
+    else if (result.error) problems.push({ file, error: result.error });
   }
   return { loaded, problems };
 }
 
 export function loadLawFile(engine, file) {
-  let doc;
-  try {
-    doc = parseYaml(fs.readFileSync(file, 'utf8'));
-  } catch (e) {
-    return { error: e.message };
-  }
-  if (!doc || typeof doc !== 'object' || !Array.isArray(doc.articles)) return {};
-  try {
-    return { id: engine.loadLaw(doc, file) };
-  } catch (e) {
-    return { error: e.message };
-  }
+  if (!file.endsWith('.pl')) return { error: 'Use a .pl rulework. Import upstream YAML with node scripts/import-regelrecht.js.' };
+  try { return { id: engine.loadLaw(fs.readFileSync(file, 'utf8'), file) }; }
+  catch (error) { return { error: error.message }; }
 }

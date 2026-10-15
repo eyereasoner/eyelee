@@ -76,8 +76,8 @@ export class Dec {
 
   div(o) {
     if (o.m === 0n) throw new Error('Division by zero');
-    // (a / 10^sa) / (b / 10^sb) = a * 10^(sb + K) / b  * 10^-(sa + K)... carried to DIV_SCALE places
-    const shift = DIV_SCALE + this.s - o.s;
+    // (a / 10^sa) / (b / 10^sb), scaled by 10^K: a * 10^(K + sb - sa) / b.
+    const shift = DIV_SCALE + o.s - this.s;
     let num = this.m;
     let den = o.m;
     if (shift >= 0) num *= 10n ** BigInt(shift);

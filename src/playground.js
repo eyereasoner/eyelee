@@ -27,13 +27,13 @@ function show(out, error = false) {
 
 async function boot() {
   try {
-    manifest = JSON.parse(await text('conformance/regelrecht/manifest.json'));
+    manifest = JSON.parse(await text('knowledge/manifest.json'));
     const texts = await Promise.all(manifest.laws.map((p) => text(p).then((t) => [p, t])));
     for (const [p, t] of texts) {
       try {
         engine.loadLaw(t, p);
-      } catch {
-        /* not a rulework */
+      } catch (error) {
+        throw new Error(`${p}: ${error.message}`);
       }
     }
     grammar = loadGrammar(await text(manifest.grammar));

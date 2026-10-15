@@ -57,6 +57,23 @@ function article(node, depth, lines, seen) {
     lines.push(`${pad}  before deciding, hook ${h.law} article ${h.article} fires`);
     article(h.child, depth + 2, lines, seen);
   }
+  const calculations = new Set();
+  for (const derivation of node.derivations || []) for (const computation of derivation.computations) {
+    if (['LIST', 'RECORD'].includes(computation.operation)) continue;
+    const text = `${computation.operation}(${computation.operands.map(show).join(', ')}) = ${show(computation.value)}`;
+    if (!calculations.has(text)) { lines.push(`${pad}  ${text}`); calculations.add(text); }
+  }
+  for (const derivation of node.derivations || []) if (derivation.native) {
+    const evidence = new Set();
+    for (const step of derivation.proof) {
+      for (const calculation of step.calculations) if (!evidence.has(calculation)) {
+        lines.push(`${pad}  ${calculation}`); evidence.add(calculation);
+      }
+      if (step.comparison && !step.goal.includes(' is ') && !evidence.has(step.goal)) {
+        lines.push(`${pad}  checked ${step.goal}`); evidence.add(step.goal);
+      }
+    }
+  }
   for (const o of node.outputs) {
     if (o.override) {
       lines.push(`${pad}  ${o.name} is overridden by ${o.override.law} article ${o.override.article} (lex specialis)`);

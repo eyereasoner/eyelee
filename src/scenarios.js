@@ -1,11 +1,12 @@
 // Runs regelrecht scenarios (Gherkin) against the eyelee engine.
 //
 // The step vocabulary is not hard-coded: it is read from the canonical
-// grammar (bdd/grammar.yaml), which maps each sentence to a semantic action.
+// grammar (knowledge/regelrecht/grammar.pl), which maps each sentence to a semantic action.
 // This module implements those actions, so any scenario written for the
-// reference engine runs here unchanged.
+// upstream engine runs here unchanged.
 
-import { parseYaml } from './yaml.js';
+import { parse } from '../vendor/eyelang/language.js';
+import { fromTerm } from './prolog-values.js';
 import { parseFeature } from './gherkin.js';
 import { Dec } from './decimal.js';
 import { Unknown, isUnknown, isDec, toValue, show } from './values.js';
@@ -14,7 +15,9 @@ import { resolveNote } from './notes.js';
 export const SUPPORTED_TIERS = ['core', 'provenance', 'untranslatable', 'notes'];
 
 export function loadGrammar(text) {
-  const g = parseYaml(text);
+  const facts = parse(text).facts.filter(goal => goal.relation === 'predicate:grammar/1');
+  if (facts.length !== 1) throw new Error('A .pl grammar needs exactly one grammar(Metadata) fact.');
+  const g = fromTerm(facts[0].terms[0], null, true);
   const steps = (g.steps || []).map((s) => {
     const args = s.args || [];
     let pattern = '';

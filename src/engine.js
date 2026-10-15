@@ -1,6 +1,6 @@
 // eyelee engine: executes machine-readable Dutch law (the regelrecht format).
 //
-// A rulework is a YAML file per version of a regulation. Each article may carry
+// A rulework is a Prolog file per version of a regulation. Each article may carry
 // a machine_readable section with parameters (what the caller supplies), inputs
 // (what other laws or registers supply), open terms (what a lower regulation
 // fills in), outputs and the actions that compute them. The engine selects
@@ -9,9 +9,10 @@
 // triggers, applies overrides from the laws in the execution chain, and keeps
 // a derivation tree so that every answer can be explained.
 
-import { parseYaml } from './yaml.js';
+import { compileRulework, readRulework } from './prolog-compiler.js';
+import { evaluateExpression as evaluate } from './reasoner.js';
 import { Dec } from './decimal.js';
-import { evaluate, LawError } from './operations.js';
+import { LawError } from './operations.js';
 import { Unknown, isUnknown, isRecord, toValue, referenceDate, show, isIsoDate } from './values.js';
 
 export { LawError };
@@ -174,9 +175,9 @@ export class Engine {
     this.indexes = null;
   }
 
-  // Load one rulework (YAML text or an already parsed object). Returns its id.
+  // Load one Prolog rulework (or compile a data object to Prolog). Returns its id.
   loadLaw(source, origin) {
-    const doc = typeof source === 'string' ? parseYaml(source) : source;
+    const { doc } = readRulework(typeof source === 'string' ? source : compileRulework(source));
     const law = new Law(doc, origin);
     if (!law.id) throw new LawError('LoadError', `Rulework without $id${origin ? ` (${origin})` : ''} cannot be referred to`);
     const list = this.versions.get(law.id) || [];
@@ -375,6 +376,8 @@ class Run {
     out.push(`${f.articles.size} article execution(s), each with every input and open term resolved before deciding`);
     if (f.params.size) out.push(`parameters match their declarations in ${f.params.size} article(s)`);
     if (f.boundaries) out.push(`${f.boundaries} value(s) crossed into an article and respected its nullable declarations`);
+    const expressions = [...this.cache.values()].reduce((count, result) => count + result.node.derivations.length, 0);
+    if (expressions) out.push(`${expressions} expression result(s) derived by eyelang, each with supporting rule evidence`);
     if (f.outputs.size) out.push(`every output declared never absent has a value, in ${f.outputs.size} article(s)`);
     for (const u of f.untranslatables) out.push(u);
     return out;
@@ -470,6 +473,7 @@ class Frame {
       outputs: [],
       hooks: { pre: [], post: [] },
       notes: [],
+      derivations: [],
     };
     this.scope = new Scope(this, null);
   }
@@ -798,6 +802,10 @@ class Scope {
   constructor(frame, locals) {
     this.frame = frame;
     this.locals = locals;
+  }
+
+  traceReasoner(derivation) {
+    this.frame.node.derivations.push(derivation);
   }
 
   withLocals(locals) {
